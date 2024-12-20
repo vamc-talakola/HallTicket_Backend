@@ -237,7 +237,7 @@ app.post('/api/hallticket/approve', async (req, res) => {
         // Generate QR code
         const qrCodeData = `${request.rollNumber}-${request.sem}`;
         const qrCodeUrl = await QRCode.toDataURL(qrCodeData);
-
+        
         // Create hall ticket
         const hallTicket = new HallTicket({
             name,
@@ -251,13 +251,14 @@ app.post('/api/hallticket/approve', async (req, res) => {
                 exam_date: subject.exam_date,
                 starttime: subject.starttime,
                 endtime: subject.endtime
-            }))
+            })),
+            // photo: semester.photo
         });
 
         await hallTicket.save();
         res.status(200).json({ message: 'Hall ticket request approved and hall ticket generated successfully' });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({ message: error.message });
     }
 });
 

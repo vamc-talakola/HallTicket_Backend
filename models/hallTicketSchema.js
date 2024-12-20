@@ -5,10 +5,10 @@ const hallTicketSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    photo: {
-        type: String,
-        required: true
-    },
+    // photo: {
+    //     type: String,
+    //     required: true
+    // },
     rollNumber: {
         type: String,
         required: true,
