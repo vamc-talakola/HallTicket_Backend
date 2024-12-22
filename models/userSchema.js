@@ -1,42 +1,33 @@
 const mongoose = require('mongoose');
 
-const userSchema = new mongoose.Schema({
-    rollNumber: {
-        type: String,
-        unique: true
+const CandidateSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    fatherName: { type: String, required: true },
+    motherName: { type: String, required: true },
+    dob: { type: Date, required: true },
+    gender: { type: String, required: true },
+    category: { type: String, enum: ['SC', 'ST', 'BC', 'EBC', 'ENS'], required: true },
+    maritalStatus: { type: String, required: true },
+    password: { type: String, required: true },
+    contactInfo: {
+      mobileNumber: { type: String, unique: true, required: true },
+      email: { type: String, unique: true, required: true }
     },
-    photo:{
-        type: String
+    educationInfo: {
+      highSchool: { schoolName: String, rollNo: String, percentage: Number },
+      intermediate: { schoolName: String, rollNo: String, percentage: Number },
+      graduation: { schoolName: String, rollNo: String, percentage: Number }
     },
-    phone: {
-        type: String,
+    examPreferences: {
+      state: String,
+      cities: [String]
     },
-    address: {
-        type: String,
-    },
-    name: {
-        type: String,
-    },
-    email: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    password: {
-        type: String,
-        required: true
-    },
-    role: {
-        type: [String],
-        enum: ['invigilator', 'user', 'controller'],
-        default: ['user']
-    },
-    approved: {
-        type: Boolean,
-        default: false
-    }
+    photo: { type: String, required: true },
+    signature: { type: String, required: true },
+    hallTicketGenerated: { type: Boolean, default: false },
 });
+  
 
-const User = mongoose.model('User', userSchema);
+const Candidate = mongoose.model('Candidate', CandidateSchema);
 
-module.exports = User;
+module.exports = Candidate;
