@@ -53,7 +53,7 @@ app.post('/login', async (req, res) => {
 app.get('/candidates', async (req, res) => {
     try {
       const candidates = await Candidate.find();
-      res.json(candidates);
+      res.json({data:candidates});
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
