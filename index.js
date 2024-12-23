@@ -11,9 +11,72 @@ const QRCode = require('qrcode');
 const app = express()
 dotenv.config();
 const jwt = require('jsonwebtoken');
+const hallticketRequestSchema = require('./models/hallticketRequestSchema');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
+
+const nodemailer = require('nodemailer');
+
+const sendEmail = (to, subject, text) => {
+    const transporter = nodemailer.createTransport({
+        service: 'Gmail',
+        auth: {
+            user: process.env.EMAIL_USER, // Your email address
+            pass: process.env.EMAIL_PASS  // Your email password
+        }
+    });
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to,
+        subject,
+        text
+    };
+
+    transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+            console.error('Error sending email:', err);
+        } else {
+            console.log('Email sent:', info.response);
+        }
+    });
+};
+
+
+const otps = {};
+
+app.post('/send-otp', async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const otp = Math.floor(100000 + Math.random() * 900000); // Generate 6-digit OTP
+        otps[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 }; // Expires in 5 minutes
+
+        // Send email with the OTP
+        sendEmail(email, 'Your OTP for Verification', `Your OTP is: ${otp}`);
+
+        res.status(200).json({ message: 'OTP sent to email' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/verify-otp', (req, res) => {
+  const { email, otp } = req.body;
+
+  const record = otps[email];
+  if (!record) return res.status(400).json({ error: 'OTP not found' });
+
+  if (record.otp !== parseInt(otp)) return res.status(400).json({ error: 'Invalid OTP' });
+
+  if (Date.now() > record.expiresAt) return res.status(400).json({ error: 'OTP expired' });
+
+  delete otps[email];
+  res.status(200).json({ message: 'OTP verified successfully' });
+});
+
+
 
 app.post('/register', async (req, res) => {
     const { name, fatherName,motherName, dob, gender, category,maritalStatus, contactInfo,educationInfo, photo, signature, password,examPreferences } = req.body;
@@ -59,7 +122,6 @@ app.get('/candidates', async (req, res) => {
     }
 });
 
-//get candidate by id
 app.get('/candidate/:id', async (req, res) => {
     const { id } = req.params;
     try {
@@ -69,38 +131,51 @@ app.get('/candidate/:id', async (req, res) => {
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
-}
-);
+});
 
 
 app.put('/candidate/:id/status', async (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
-  
-    try {
-      const candidate = await Candidate.findByIdAndUpdate(
-        id,
-        { status },
-        { new: true }
-      );
-  
-      if (!candidate) return res.status(404).json({ error: 'Candidate not found' });
-      res.json(candidate);
-    } catch (err) {
-      res.status(400).json({ error: err.message });
-    }
+  const { id } = req.params;
+  const { status, reviewerId } = req.body;
+
+  try {
+      // Validate the provided status
+      const validStatuses = ['approved', 'rejected']; // Adjust based on your requirements
+      if (!validStatuses.includes(status)) {
+          return res.status(400).json({ error: `Invalid status. Allowed values: ${validStatuses.join(', ')}` });
+      }
+
+      // Find the candidate
+      const candidate = await Candidate.findById(id);
+      if (!candidate) {
+          return res.status(404).json({ error: 'Candidate not found' });
+      }
+
+      // Update status, reviewer information, and timestamps
+      candidate.status = status;
+      candidate.reviewedAt = new Date();
+      candidate.reviewerId = reviewerId; // Ensure the reviewerId is provided
+
+      // Send email notification based on status
+      const emailSubject = `Your application status has been updated to ${status}`;
+      const emailText = status === 'approved'
+          ? `Dear ${candidate.name},\n\nYour application has been approved. You can proceed with the next steps.\n\nBest regards,\nThe Team`
+          : `Dear ${candidate.name},\n\nYour application has been rejected. If you have questions, please contact us.\n\nBest regards,\nThe Team`;
+
+      sendEmail(candidate.contactInfo.email, emailSubject, emailText);
+
+      if (status === 'rejected') {
+          await candidate.delete();
+          return res.status(200).json({ message: 'Candidate rejected and deleted' });
+      } else {
+          await candidate.save();
+          return res.status(200).json({ message: `Candidate status updated to ${status}`, candidate });
+      }
+  } catch (err) {
+      res.status(500).json({ error: err.message });
+  }
 });
 
-app.delete('/candidates/:id', async (req, res) => {
-    try {
-      const deletedCandidate = await Candidate.findByIdAndDelete(req.params.id);
-      if (!deletedCandidate) return res.status(404).json({ error: 'Candidate not found' });
-  
-      res.status(200).json({ message: 'Candidate deleted successfully' });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-});
 
 app.post('/login/:role', async (req, res) => {
     const { role } = req.params;
@@ -121,42 +196,134 @@ app.post('/login/:role', async (req, res) => {
     }
 });
 
-app.post('/generate-hallticket', async (req, res) => {
-    const { candidateId, examCenter } = req.body;
-    const candidate = await Candidate.findById(candidateId);
-  
-    if (!candidate || candidate.hallTicketGenerated)
-      return res.status(400).json({ error: 'Invalid candidate or hall ticket already generated' });
-  
-    const hallTicketNumber = `HT-${Date.now()}`;
-    const qrData = JSON.stringify({ candidateId, hallTicketNumber, examCenter });
-  
+//get all hallticketrequests
+app.get('/hallticket-requests', async (req, res) => {
     try {
-      const qrCode = await QRCode.toDataURL(qrData);
-      const hallTicket = new HallTicket({
-        candidateId,
-        hallTicketNumber,
-        examCenter,
-        qrCode
-      });
-  
-      await hallTicket.save();
-      candidate.hallTicketGenerated = true;
-      await candidate.save();
-      res.status(201).json(hallTicket);
+        const requests = await hallticketRequestSchema.find().populate('candidateId');
+        res.json(requests);
     } catch (err) {
-      res.status(400).json({ error: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
 
-app.get('/hallticket/:id', async (req, res) => {
-    const { id } = req.params;
-    const hallTicket = await HallTicket.findOne({ candidateId: id }).populate('candidateId');
-  
-    if (!hallTicket) return res.status(404).json({ error: 'Hall Ticket not found' });
-  
-    res.json(hallTicket);
+app.post('/request-hallticket', async (req, res) => {
+    const { candidateId, paymentStatus } = req.body;
+
+    try {
+        const existingRequest = await hallticketRequestSchema.findOne({ candidateId });
+        if (existingRequest) {
+            return res.status(400).json({ error: 'Hall ticket request already exists' });
+        }
+
+        const newRequest = new HallTicketRequest({ candidateId, paymentStatus });
+        await newRequest.save();
+
+        res.status(201).json({ message: 'Hall ticket request submitted successfully', request: newRequest });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
+
+app.put('/approve-hallticket/:requestId', async (req, res) => {
+  const { requestId } = req.params;
+  const { status, reviewerId } = req.body;
+
+  try {
+      const request = await HallTicketRequest.findById(requestId).populate('candidateId');
+      if (!request) return res.status(404).json({ error: 'Request not found' });
+
+      const candidate = request.candidateId;
+
+      if (!['approved', 'rejected'].includes(status)) {
+          return res.status(400).json({ error: 'Invalid status value' });
+      }
+
+      request.status = status;
+      request.reviewedAt = new Date();
+      request.reviewerId = reviewerId; // Controller's ID
+      await request.save();
+
+      if (status === 'approved') {
+          // Send approval email
+          const message = `
+              Dear ${candidate.name},
+              Your hall ticket request has been approved! Your hall ticket will be generated soon.
+              Please wait for further communication.
+          `;
+          sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Approved', message);
+
+          return res.status(200).json({ message: 'Request approved and email sent to candidate' });
+      } else {
+          // Send rejection email and delete the request
+          await request.delete();
+
+          const message = `
+              Dear ${candidate.name},
+              We regret to inform you that your hall ticket request has been rejected. 
+              Please contact support for more information.
+          `;
+          sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Rejected', message);
+
+          return res.status(200).json({ message: 'Request rejected and email sent to candidate' });
+      }
+  } catch (err) {
+      res.status(500).json({ error: err.message });
+  }
+});
+
+
+app.post('/generate-hallticket', async (req, res) => {
+  const { candidateId, examCenter } = req.body;
+
+  try {
+      const candidate = await Candidate.findById(candidateId);
+      if (!candidate || candidate.hallTicketGenerated) {
+          return res.status(400).json({ error: 'Invalid candidate or hall ticket already generated' });
+      }
+
+      const hallTicketNumber = `HT-${Date.now()}`;
+      const qrData = JSON.stringify({ candidateId, hallTicketNumber, examCenter });
+      const qrCode = await QRCode.toDataURL(qrData);
+
+      const hallTicket = new HallTicket({
+          candidateId,
+          hallTicketNumber,
+          examCenter,
+          qrCode,
+      });
+
+      await hallTicket.save();
+      candidate.hallTicketGenerated = true;
+      await candidate.save();
+
+      // Send email with hall ticket details
+      const message = `
+          Dear ${candidate.name},
+          Your hall ticket has been generated successfully.
+          Hall Ticket Number: ${hallTicketNumber}.
+          Go to the portal to download the hall ticket.
+      `;
+      sendEmail(candidate.contactInfo.email, 'Hall Ticket Generated', message);
+
+      res.status(201).json(hallTicket);
+  } catch (err) {
+      res.status(400).json({ error: err.message });
+  }
+});
+
+
+//get hall ticket by hallticketNumber
+app.get('/hallticket/:hallTicketNumber', async (req, res) => {
+    const { hallTicketNumber } = req.params;
+    try {
+        const hallTicket = await HallTicket.findOne({ hallTicketNumber });
+        if (!hallTicket) return res.status(404).json({ error: 'Hall ticket not found' });
+        res.json({hallTicket});
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+})
+
 
 app.post('/verify-qrcode', async (req, res) => {
     const { qrData } = req.body;
@@ -183,7 +350,7 @@ if (!process.env.MONGODB_URI) {
             dbName: process.env.DB_NAME
         })
         .then(() => {
-            app.listen(process.env.PORT || 3000, () => {
+            app.listen(process.env.PORT || 4000, () => {
                 console.log("Node.js server is running on port 3000");
             });
             console.log("MongoDB connected");
