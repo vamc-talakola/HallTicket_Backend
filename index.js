@@ -59,6 +59,20 @@ app.get('/candidates', async (req, res) => {
     }
 });
 
+//get candidate by id
+app.get('/candidate/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+      const candidate = await Candidate.findById(id);
+      if (!candidate) return res.status(404).json({ error: 'Candidate not found' });
+      res.json(candidate);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+}
+);
+
+
 app.put('/candidate/:id/status', async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
