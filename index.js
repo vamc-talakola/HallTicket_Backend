@@ -220,7 +220,7 @@ app.post('/login/:role', async (req, res) => {
       if (!isPasswordValid) return res.status(401).json({ error: 'Invalid password' });
   
       const token = jwt.sign({ id: user._id, role }, 'SECRET_KEY');
-      res.json({ token });
+      res.json({ token,user });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
