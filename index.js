@@ -165,7 +165,7 @@ app.put('/candidate/:id/status', async (req, res) => {
       sendEmail(candidate.contactInfo.email, emailSubject, emailText);
 
       if (status === 'rejected') {
-          await candidate.delete();
+          await candidate.deleteOne();
           return res.status(200).json({ message: 'Candidate rejected and deleted' });
       } else {
           await candidate.save();
