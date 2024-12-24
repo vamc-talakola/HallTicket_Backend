@@ -313,7 +313,7 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
           // Send rejection email and delete the request
            const candidate = await Candidate.findByIdAndUpdate(
             request.candidateId,
-            { $set: { hallticketRequestSent: true } },
+            { $set: { hallticketRequestSent: false } },
             { new: true }  // Return the updated document
         );
 
