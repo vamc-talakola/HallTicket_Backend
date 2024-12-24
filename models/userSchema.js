@@ -26,6 +26,8 @@ const CandidateSchema = new mongoose.Schema({
     signature: { type: String, required: true },
     hallTicketGenerated: { type: Boolean, default: false },
     status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+    paymentStatus:{type:Boolean,defalut:false},
+    hallticketRequestSent:{type:Boolean,defalut:false},
     reviewedAt: { type: Date },
     reviewerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Controller' }
 });
