@@ -288,55 +288,61 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
   const { status, reviewerId } = req.body;
 
   try {
-      const request = await HallTicketRequest.findById(requestId).populate('candidateId');
-      if (!request) return res.status(404).json({ error: 'Request not found' });
+    // Fetch the hall ticket request and populate candidate details
+    const request = await HallTicketRequest.findById(requestId).populate('candidateId');
+    if (!request) return res.status(404).json({ error: 'Request not found' });
 
-      const candidate = request.candidateId;
+    const candidate = request.candidateId;
+    if (!candidate) return res.status(404).json({ error: 'Candidate not found' });
 
-      if (!['approved', 'rejected'].includes(status)) {
-          return res.status(400).json({ error: 'Invalid status value' });
-      }
+    // Validate the status field
+    if (!['approved', 'rejected'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status value' });
+    }
 
-      request.status = status;
-      request.reviewedAt = new Date();
-      request.reviewerId = reviewerId; // Controller's ID
-      await request.save();
+    // Update the request's status and other fields
+    request.status = status;
+    request.reviewedAt = new Date();
+    request.reviewerId = reviewerId; // Set the reviewer ID
+    await request.save();
 
-      if (status === 'approved') {
-          // Send approval email
-          const message = `
-              Dear ${candidate.name},
-              Your hall ticket request has been approved! Your hall ticket will be generated soon.
-              Please wait for further communication.
-          `;
-          sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Approved', message);
+    if (status === 'approved') {
+      // Send approval email
+      const message = `
+        Dear ${candidate.name},
+        Your hall ticket request has been approved! Your hall ticket will be generated soon.
+        Please wait for further communication.
+      `;
+      sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Approved', message);
 
-          return res.status(200).json({ message: 'Request approved and email sent to candidate' });
-      } else {
-          // Send rejection email and delete the request
-           const candidate = await Candidate.findByIdAndUpdate(
-            request.candidateId,
-            { $set: { hallticketRequestSent: false } },
-            { new: true }  // Return the updated document
-        );
+      return res.status(200).json({ message: 'Request approved and email sent to candidate' });
+    } else if (status === 'rejected') {
+      // Update the candidate's hallticketRequestSent field
+      await Candidate.findByIdAndUpdate(
+        candidate._id,
+        { $set: { hallticketRequestSent: false } },
+        { new: true } // Return the updated document
+      );
 
-        }
-          await request.deleteOne();
-         
+      // Delete the hall ticket request
+      await request.deleteOne();
 
-          const message = `
-              Dear ${candidate.name},
-              We regret to inform you that your hall ticket request has been rejected. 
-              Please contact support for more information.
-          `;
-          sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Rejected', message);
+      // Send rejection email
+      const message = `
+        Dear ${candidate.name},
+        We regret to inform you that your hall ticket request has been rejected. 
+        Please contact support for more information.
+      `;
+      sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Rejected', message);
 
-          return res.status(200).json({ message: 'Request rejected and email sent to candidate' });
-      }
+      return res.status(200).json({ message: 'Request rejected and email sent to candidate' });
+    }
   } catch (err) {
-      res.status(500).json({ error: err.message });
+    // Return a server error if an exception occurs
+    return res.status(500).json({ error: err.message });
   }
 });
+
 
 
 app.post('/generate-hallticket', async (req, res) => {
