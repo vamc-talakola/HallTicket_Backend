@@ -133,6 +133,36 @@ app.get('/candidate/:id', async (req, res) => {
     }
 });
 
+app.put('/update-payment-status', async (req, res) => {
+    const { id, paymentStatus } = req.body;
+
+    // Validate input
+    if (!id || typeof paymentStatus !== 'boolean') {
+        return res.status(400).json({ message: 'Invalid input' });
+    }
+
+    try {
+        // Find the candidate by id and update the paymentStatus
+        const candidate = await Candidate.findByIdAndUpdate(
+            id,  // MongoDB ObjectId for candidate
+            { $set: { paymentStatus } }, // Update operation
+            { new: true }  // Return the updated document
+        );
+
+        if (!candidate) {
+            return res.status(404).json({ message: 'Candidate not found' });
+        }
+
+        // Return the updated candidate data
+        res.status(200).json({
+            message: 'Payment status updated successfully',
+            candidate
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
 
 app.put('/candidate/:id/status', async (req, res) => {
   const { id } = req.params;
@@ -216,19 +246,39 @@ app.post('/request-hallticket', async (req, res) => {
     }
 
     try {
+        // Check if the hall ticket request already exists
         const existingRequest = await HallTicketRequest.findOne({ candidateId });
         if (existingRequest) {
             return res.status(400).json({ error: 'Hall ticket request already exists' });
         }
 
+        // Create a new hall ticket request
         const newRequest = new HallTicketRequest({ candidateId, paymentStatus });
         await newRequest.save();
 
-        res.status(201).json({ message: 'Hall ticket request submitted successfully', request: newRequest });
+        // Update the candidate's hallticketRequestSent field to true
+        const candidate = await Candidate.findByIdAndUpdate(
+            candidateId,
+            { $set: { hallticketRequestSent: true } },
+            { new: true }  // Return the updated document
+        );
+
+        if (!candidate) {
+            return res.status(404).json({ error: 'Candidate not found' });
+        }
+
+        // Return the success response with the updated candidate data
+        res.status(201).json({
+            message: 'Hall ticket request submitted successfully',
+            request: newRequest,
+            candidate
+        });
+
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
+
 
 app.put('/approve-hallticket/:requestId', async (req, res) => {
   const { requestId } = req.params;
