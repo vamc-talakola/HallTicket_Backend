@@ -45,6 +45,9 @@ const sendEmail = (to, subject, text) => {
 
 
 const otps = {};
+app.get("/", (req, res) => {
+  res.send("Hello World");
+});
 
 app.post('/send-otp', async (req, res) => {
     const { email } = req.body;
