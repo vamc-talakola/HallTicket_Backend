@@ -311,7 +311,15 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
           return res.status(200).json({ message: 'Request approved and email sent to candidate' });
       } else {
           // Send rejection email and delete the request
+           const candidate = await Candidate.findByIdAndUpdate(
+            request.candidateId,
+            { $set: { hallticketRequestSent: true } },
+            { new: true }  // Return the updated document
+        );
+
+        }
           await request.deleteOne();
+         
 
           const message = `
               Dear ${candidate.name},
