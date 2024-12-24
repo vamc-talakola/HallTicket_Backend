@@ -11,7 +11,7 @@ const QRCode = require('qrcode');
 const app = express()
 dotenv.config();
 const jwt = require('jsonwebtoken');
-const hallticketRequestSchema = require('./models/hallticketRequestSchema');
+const HallTicketRequest = require('./models/hallticketRequestSchema');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
@@ -199,7 +199,7 @@ app.post('/login/:role', async (req, res) => {
 //get all hallticketrequests
 app.get('/hallticket-requests', async (req, res) => {
     try {
-        const requests = await hallticketRequestSchema.find().populate('candidateId');
+        const requests = await HallTicketRequest.find().populate('candidateId');
         res.json(requests);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -210,7 +210,7 @@ app.post('/request-hallticket', async (req, res) => {
     const { candidateId, paymentStatus } = req.body;
 
     try {
-        const existingRequest = await hallticketRequestSchema.findOne({ candidateId });
+        const existingRequest = await HallTicketRequest.findOne({ candidateId });
         if (existingRequest) {
             return res.status(400).json({ error: 'Hall ticket request already exists' });
         }
