@@ -209,6 +209,12 @@ app.get('/hallticket-requests', async (req, res) => {
 app.post('/request-hallticket', async (req, res) => {
     const { candidateId, paymentStatus } = req.body;
 
+    if (!candidateId || paymentStatus === undefined) {
+        return res.status(400).json({
+            error: 'candidateId and paymentStatus are required fields.'
+        });
+    }
+
     try {
         const existingRequest = await HallTicketRequest.findOne({ candidateId });
         if (existingRequest) {
