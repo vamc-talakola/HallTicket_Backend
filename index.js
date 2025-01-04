@@ -232,7 +232,7 @@ app.post('/login/:role', async (req, res) => {
 //get all hallticketrequests
 app.get('/hallticket-requests', async (req, res) => {
     try {
-        const requests = await HallTicketRequest.find().populate('candidateId');
+        const requests = await HallTicketRequest.find().populate('candidateId').lean();
         res.json(requests);
     } catch (err) {
         res.status(500).json({ error: err.message });
