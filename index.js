@@ -256,7 +256,7 @@ app.post('/request-hallticket', async (req, res) => {
         }
 
         // Create a new hall ticket request
-        const newRequest = new HallTicketRequest({ candidateId, paymentStatus });
+        const newRequest = new HallTicketRequest({ candidateId:candidateId, paymentStatus });
         await newRequest.save();
 
         // Update the candidate's hallticketRequestSent field to true
