@@ -360,7 +360,9 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
 
 app.post('/generate-hallticket', async (req, res) => {
   const { candidateId, examCenter } = req.body;
-
+if (!mongoose.Types.ObjectId.isValid(candidateId)) {
+    return res.status(400).json({ error: 'Invalid candidate ID' });
+  }
   try {
       const candidate = await Candidate.findById(candidateId);
       if (!candidate || candidate.hallTicketGenerated) {
