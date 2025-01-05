@@ -36,6 +36,12 @@ app.use(cors(corsOptions));
 
 // Optionally, handle preflight requests for all routes
 app.options('*', cors(corsOptions));
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*'); // Or a specific domain
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
 
 app.use(cors(corsOptions));
 
