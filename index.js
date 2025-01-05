@@ -15,36 +15,6 @@ const HallTicketRequest = require('./models/hallticketRequestSchema');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
-
-
-const allowedOrigins = ['https://attendance-frontend-ten.vercel.app/', 'http://localhost:3000']; // Replace with your actual frontend URLs
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (allowedOrigins.includes(origin) || !origin) {
-      // Allow requests with no origin (like mobile apps or Postman)
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true // if you need to send cookies or other credentials
-};
-
-app.use(cors(corsOptions));
-
-// Optionally, handle preflight requests for all routes
-app.options('*', cors(corsOptions));
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*'); // Or a specific domain
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
-});
-
-app.use(cors(corsOptions));
-
 const nodemailer = require('nodemailer');
 
 const sendEmail = (to, subject, text) => {
@@ -377,17 +347,22 @@ app.post('/generate-hallticket', async (req, res) => {
   const { candidateId, examCenter } = req.body;
 
   try {
-      const candidate = await Candidate.findById(candidateId);
+      // Correct way to create an ObjectId instance
+      const objectIdCandidateId = new mongoose.Types.ObjectId(candidateId); 
+
+      // Find the candidate using the converted ObjectId
+      const candidate = await Candidate.findById(objectIdCandidateId);
+
       if (!candidate || candidate.hallTicketGenerated) {
           return res.status(400).json({ error: 'Invalid candidate or hall ticket already generated' });
       }
 
-      const hallTicketNumber = HT-${Date.now()};
+      const hallTicketNumber = `HT-${Date.now()}`;
       const qrData = JSON.stringify({ candidateId, hallTicketNumber, examCenter });
       const qrCode = await QRCode.toDataURL(qrData);
 
       const hallTicket = new HallTicket({
-          candidateId:candidateId,
+          candidateId,
           hallTicketNumber,
           examCenter,
           qrCode,
@@ -398,12 +373,12 @@ app.post('/generate-hallticket', async (req, res) => {
       await candidate.save();
 
       // Send email with hall ticket details
-      const message = 
+      const message = `
           Dear ${candidate.name},
           Your hall ticket has been generated successfully.
           Hall Ticket Number: ${hallTicketNumber}.
           Go to the portal to download the hall ticket.
-      ;
+      `;
       sendEmail(candidate.contactInfo.email, 'Hall Ticket Generated', message);
 
       res.status(201).json(hallTicket);
