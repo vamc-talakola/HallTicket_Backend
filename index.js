@@ -358,7 +358,7 @@ app.post('/generate-hallticket', async (req, res) => {
       const qrCode = await QRCode.toDataURL(qrData);
 
       const hallTicket = new HallTicket({
-          candidateId,
+          candidateId:candidateId,
           hallTicketNumber,
           examCenter,
           qrCode,
