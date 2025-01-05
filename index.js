@@ -358,50 +358,44 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
 });
 
 
-// app.post('/generate-hallticket', async (req, res) => {
-//   const { candidateId, examCenter } = req.body;
+app.post('/generate-hallticket', async (req, res) => {
+  const { candidateId, examCenter } = req.body;
 
-//   try {
-//       // Correct way to create an ObjectId instance
-//       const objectIdCandidateId = new mongoose.Types.ObjectId(candidateId); 
+  try {
+      const candidate = await Candidate.findById(candidateId);
+      if (!candidate || candidate.hallTicketGenerated) {
+          return res.status(400).json({ error: 'Invalid candidate or hall ticket already generated' });
+      }
 
-//       // Find the candidate using the converted ObjectId
-//       const candidate = await Candidate.findById(objectIdCandidateId);
+      const hallTicketNumber = HT-${Date.now()};
+      const qrData = JSON.stringify({ candidateId, hallTicketNumber, examCenter });
+      const qrCode = await QRCode.toDataURL(qrData);
 
-//       if (!candidate || candidate.hallTicketGenerated) {
-//           return res.status(400).json({ error: 'Invalid candidate or hall ticket already generated' });
-//       }
+      const hallTicket = new HallTicket({
+          candidateId,
+          hallTicketNumber,
+          examCenter,
+          qrCode,
+      });
 
-//       const hallTicketNumber = `HT-${Date.now()}`;
-//       const qrData = JSON.stringify({ candidateId, hallTicketNumber, examCenter });
-//       const qrCode = await QRCode.toDataURL(qrData);
+      await hallTicket.save();
+      candidate.hallTicketGenerated = true;
+      await candidate.save();
 
-//       const hallTicket = new HallTicket({
-//           candidateId,
-//           hallTicketNumber,
-//           examCenter,
-//           qrCode,
-//       });
+      // Send email with hall ticket details
+      const message = 
+          Dear ${candidate.name},
+          Your hall ticket has been generated successfully.
+          Hall Ticket Number: ${hallTicketNumber}.
+          Go to the portal to download the hall ticket.
+      ;
+      sendEmail(candidate.contactInfo.email, 'Hall Ticket Generated', message);
 
-//       await hallTicket.save();
-//       candidate.hallTicketGenerated = true;
-//       await candidate.save();
-
-//       // Send email with hall ticket details
-//       const message = `
-//           Dear ${candidate.name},
-//           Your hall ticket has been generated successfully.
-//           Hall Ticket Number: ${hallTicketNumber}.
-//           Go to the portal to download the hall ticket.
-//       `;
-//       sendEmail(candidate.contactInfo.email, 'Hall Ticket Generated', message);
-
-//       res.status(201).json(hallTicket);
-//   } catch (err) {
-//       res.status(400).json({ error: err.message });
-//   }
-// });
-
+      res.status(201).json(hallTicket);
+  } catch (err) {
+      res.status(400).json({ error: err.message });
+  }
+});
 //get hall ticket by hallticketNumber
 app.get('/hallticket/:hallTicketNumber', async (req, res) => {
     const { hallTicketNumber } = req.params;
