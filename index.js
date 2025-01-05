@@ -94,8 +94,10 @@ app.post('/verify-otp', (req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, "public")));
-
-const tempDir = path.join(os.tmpdir(), "proxied-images");
+app.use("/proxied-images", express.static(tempDir));
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir, { recursive: true });
+}
 app.use('/proxied-images', express.static(tempDir));
 
 app.get("/proxy", async (req, res) => {
@@ -106,49 +108,28 @@ app.get("/proxy", async (req, res) => {
   }
 
   try {
-    // Fetch the image from the external URL
-    // const decodedUrl = decodeURIComponent(url);
-    // console.log("decodedUrl", decodedUrl);
-    const fetch = (await import('node-fetch')).default;
+    console.log(`Fetching image from URL: ${url}`);
+
+    // Fetch the image
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error("Failed to fetch the image");
+      throw new Error(`Failed to fetch image. Status: ${response.status}`);
     }
 
-    // Use arrayBuffer() instead of buffer()
-    const buffer = await response.arrayBuffer();
+    const buffer = await response.buffer();
 
-    // Convert the arrayBuffer to a Buffer object
-    const nodeBuffer = Buffer.from(buffer);
+    // Sanitize and generate file path
+    const sanitizedFileName = encodeURIComponent(url).replace(/[^a-zA-Z0-9-_\.]/g, "");
+    const filePath = path.join(tempDir, `${Date.now()}-${sanitizedFileName}.jpg`);
 
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
+    fs.writeFileSync(filePath, buffer);
+    console.log(`Image saved at: ${filePath}`);
 
-    // Sanitize the file name by encoding the URL and removing unwanted characters
-    const sanitizedFileName = encodeURIComponent(url)
-      .replace(/%2F/g, "_") // Replace URL-encoded slashes with underscores
-      .replace(/%3F/g, "") // Remove URL-encoded '?' characters
-      .replace(/%3D/g, "") // Remove URL-encoded '=' characters
-      .replace(/%26/g, "") // Remove URL-encoded '&' characters
-      .replace(/[^a-zA-Z0-9-_\.]/g, ""); // Remove any other non-alphanumeric characters
-
-    const filePath = path.join(
-      tempDir,
-      `${Date.now()}-${sanitizedFileName}`
-    );
-
-    // Save the image buffer to a file
-    fs.writeFileSync(filePath, nodeBuffer);
-    res.setHeader("Content-Type", "image/jpeg");
-
-    // Construct the URL for the stored image
     const proxiedImageUrl = `/proxied-images/${path.basename(filePath)}`;
-
     res.json({ url: proxiedImageUrl });
   } catch (error) {
-    console.error("Error fetching the resource:", error);
-    res.status(500).json({ error: `${error}` });
+    console.error("Error fetching or saving the image:", error);
+    res.status(500).json({ error: "Failed to proxy the image." });
   }
 });
 
