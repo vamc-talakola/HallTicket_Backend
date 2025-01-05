@@ -367,7 +367,7 @@ app.post('/generate-hallticket', async (req, res) => {
           return res.status(400).json({ error: 'Invalid candidate or hall ticket already generated' });
       }
 
-      const hallTicketNumber = HT-${Date.now()};
+      const hallTicketNumber = `HT-${Date.now()}`;
       const qrData = JSON.stringify({ candidateId, hallTicketNumber, examCenter });
       const qrCode = await QRCode.toDataURL(qrData);
 
