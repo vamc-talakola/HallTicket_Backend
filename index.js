@@ -344,13 +344,12 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
 });
 
 
-
 app.post('/generate-hallticket', async (req, res) => {
   const { candidateId, examCenter } = req.body;
 
   try {
-      // Convert candidateId to a valid ObjectId if it's a valid string
-      const objectIdCandidateId = mongoose.Types.ObjectId(candidateId);
+      // Correct way to create an ObjectId instance
+      const objectIdCandidateId = new mongoose.Types.ObjectId(candidateId); 
 
       // Find the candidate using the converted ObjectId
       const candidate = await Candidate.findById(objectIdCandidateId);
@@ -388,7 +387,6 @@ app.post('/generate-hallticket', async (req, res) => {
       res.status(400).json({ error: err.message });
   }
 });
-
 
 //get hall ticket by hallticketNumber
 app.get('/hallticket/:hallTicketNumber', async (req, res) => {
