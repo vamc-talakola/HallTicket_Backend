@@ -349,7 +349,12 @@ app.post('/generate-hallticket', async (req, res) => {
   const { candidateId, examCenter } = req.body;
 
   try {
-      const candidate = await Candidate.findById(candidateId);
+      // Convert candidateId to a valid ObjectId if it's a valid string
+      const objectIdCandidateId = mongoose.Types.ObjectId(candidateId);
+
+      // Find the candidate using the converted ObjectId
+      const candidate = await Candidate.findById(objectIdCandidateId);
+
       if (!candidate || candidate.hallTicketGenerated) {
           return res.status(400).json({ error: 'Invalid candidate or hall ticket already generated' });
       }
