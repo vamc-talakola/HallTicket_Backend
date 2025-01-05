@@ -358,8 +358,6 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
 });
 
 
-const mongoose = require('mongoose'); // Make sure mongoose is required at the top
-
 // app.post('/generate-hallticket', async (req, res) => {
 //   const { candidateId, examCenter } = req.body;
 
