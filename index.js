@@ -383,12 +383,12 @@ app.post('/generate-hallticket', async (req, res) => {
       await candidate.save();
 
       // Send email with hall ticket details
-      const message = 
+      const message = `
           Dear ${candidate.name},
           Your hall ticket has been generated successfully.
           Hall Ticket Number: ${hallTicketNumber}.
           Go to the portal to download the hall ticket.
-      ;
+      `;
       sendEmail(candidate.contactInfo.email, 'Hall Ticket Generated', message);
 
       res.status(201).json(hallTicket);
