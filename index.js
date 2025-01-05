@@ -14,7 +14,7 @@ const jwt = require('jsonwebtoken');
 const HallTicketRequest = require('./models/hallticketRequestSchema');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-const allowedOrigins = ['http://frontend1.com', 'http://frontend2.com']; // Replace with your actual frontend URLs
+const allowedOrigins = ['https://attendance-frontend-ten.vercel.app/', 'http://localhost:3000']; // Replace with your actual frontend URLs
 
 const corsOptions = {
   origin: (origin, callback) => {
