@@ -17,22 +17,22 @@ const jwt = require('jsonwebtoken');
 const HallTicketRequest = require('./models/hallticketRequestSchema');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-const allowedOrigins = ['https://hall-ticket-frontend.vercel.app', 'http://localhost:3000']; // Replace with your actual frontend URLs
+// const allowedOrigins = ['https://hall-ticket-frontend.vercel.app', 'http://localhost:3000']; // Replace with your actual frontend URLs
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (allowedOrigins.includes(origin) || !origin) {
-      // Allow requests with no origin (like mobile apps or Postman)
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true // if you need to send cookies or other credentials
-};
+// const corsOptions = {
+//   origin: (origin, callback) => {
+//     if (allowedOrigins.includes(origin) || !origin) {
+//       // Allow requests with no origin (like mobile apps or Postman)
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+//   credentials: true // if you need to send cookies or other credentials
+// };
 
-app.use(cors(corsOptions));
+app.use(cors());
 const nodemailer = require('nodemailer');
 
 const sendEmail = (to, subject, text) => {
