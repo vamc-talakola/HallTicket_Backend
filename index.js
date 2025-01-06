@@ -143,6 +143,7 @@ app.get("/proxy", async (req, res) => {
 
     // Save the image buffer to a file
     fs.writeFileSync(filePath, nodeBuffer);
+    res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Content-Type", "image/jpeg");
 
     // Construct the URL for the stored image
