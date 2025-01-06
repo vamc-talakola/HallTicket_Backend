@@ -9,6 +9,7 @@ const HallTicket = require('./models/hallTicketSchema');
 const cors = require('cors');
 const path = require("path");
 const os = require('os');
+const fs = require('fs');
 const QRCode = require('qrcode');
 const app = express()
 dotenv.config();
