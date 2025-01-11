@@ -440,7 +440,7 @@ if (!mongoose.Types.ObjectId.isValid(candidateId)) {
       }
 
       const hallTicketNumber = `HT-${Date.now()}`;
-      const qrData = JSON.stringify({ candidateId, hallTicketNumber, examCenter });
+      const qrData = hallTicketNumber;
       const qrCode = await QRCode.toDataURL(qrData);
 
       const hallTicket = new HallTicket({
@@ -484,10 +484,9 @@ app.get('/hallticket/:hallTicketNumber', async (req, res) => {
 app.post('/verify-qrcode', async (req, res) => {
     const { qrData } = req.body;
     try {
-      const decodedData = JSON.parse(qrData);
+      const decodedData = qrData;
       const hallTicket = await HallTicket.findOne({
-        candidateId: decodedData.candidateId,
-        hallTicketNumber: decodedData.hallTicketNumber
+        hallTicketNumber: decodedData
       });
   
       if (!hallTicket) return res.status(404).json({ error: 'Invalid QR Code' });
