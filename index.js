@@ -439,7 +439,7 @@ if (!mongoose.Types.ObjectId.isValid(candidateId)) {
           return res.status(400).json({ error: 'Invalid candidate or hall ticket already generated' });
       }
 
-      const hallTicketNumber = `HT-${Date.now()}`;
+    const hallTicketNumber = `HT-${candidateId}-${Date.now()}`;
       const qrData = hallTicketNumber;
       const qrCode = await QRCode.toDataURL(qrData);
 
