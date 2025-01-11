@@ -440,7 +440,7 @@ if (!mongoose.Types.ObjectId.isValid(candidateId)) {
       }
 
     const hallTicketNumber = `HT-${candidateId}-${Date.now()}`;
-      const qrData = hallTicketNumber;
+      const qrData = hallTicketNumber.toString();
       const qrCode = await QRCode.toDataURL(qrData);
 
       const hallTicket = new HallTicket({
