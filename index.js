@@ -45,7 +45,7 @@ const nodemailer = require('nodemailer');
 const sendEmail = (to, subject, text) => {
   console.log('Sending email:', { to, subject, text });
   console.log('Email user:', process.env.EMAIL_USER);
-  console.log('Email pass:', process.env.EMAIL_PASS ? '****' : 'Not set'); // Check if EMAIL_PASS is set
+  console.log('Email pass:', process.env.EMAIL_PASS ? process.env.EMAIL_PASS : 'Not set'); // Check if EMAIL_PASS is set
 
   const transporter = nodemailer.createTransport({
     service: 'Gmail',
@@ -491,11 +491,11 @@ app.get('/hallticket/:hallTicketNumber', async (req, res) => {
 app.post('/verify-qrcode', async (req, res) => {
   const { qrData } = req.body;
   try {
-    const hallTicket = await HallTicket.findOne({ hallTicketNumber: qrData });
+    const hallTicket = await HallTicket.findOne({ hallTicketNumber: qrData }).populate('candidateId');
   
     if (!hallTicket) return res.status(404).json({ error: 'Invalid QR Code' });
   
-    res.json({ message: 'QR Code is valid', hallTicket });
+    res.json({ message: 'QR Code is valid', data:hallTicket.candidateId });
   } catch (err) {
     res.status(400).json({ error: 'Invalid QR Code format' });
   }
