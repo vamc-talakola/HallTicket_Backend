@@ -43,6 +43,8 @@ app.use(function (req, res, next) {
 const nodemailer = require('nodemailer');
 
 const sendEmail = (to, subject, text) => {
+  console.log('Sending email:', { to, subject, text });
+  console.log('Email user:', process.env.EMAIL_USER);
     const transporter = nodemailer.createTransport({
         service: 'Gmail',
         auth: {
@@ -75,16 +77,19 @@ app.get("/", (req, res) => {
 
 app.post('/send-otp', async (req, res) => {
     const { email } = req.body;
+    console.log(email);
 
     try {
         const otp = Math.floor(100000 + Math.random() * 900000); // Generate 6-digit OTP
         otps[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 }; // Expires in 5 minutes
+        console.log(otp);
 
         // Send email with the OTP
         sendEmail(email, 'Your OTP for Verification', `Your OTP is: ${otp}`);
 
         res.status(200).json({ message: 'OTP sent to email' });
     } catch (err) {
+      console.log(err.message);
         res.status(500).json({ error: err.message });
     }
 });
