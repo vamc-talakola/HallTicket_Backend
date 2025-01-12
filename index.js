@@ -87,7 +87,7 @@ app.post('/send-otp', async (req, res) => {
     console.log(otp);
 
     // Send email with the OTP
-    sendEmail(email, 'Your OTP for Verification', `Your OTP is: ${otp}`);
+    await await sendEmail(email, 'Your OTP for Verification', `Your OTP is: ${otp}`);
 
     res.status(200).json({ message: 'OTP sent to email' });
   } catch (err) {
@@ -286,7 +286,7 @@ app.put('/candidate/:id/status', async (req, res) => {
           ? `Dear ${candidate.name},\n\nYour application has been approved. You can proceed with the next steps.\n\nBest regards,\nThe Team`
           : `Dear ${candidate.name},\n\nYour application has been rejected. If you have questions, please contact us.\n\nBest regards,\nThe Team`;
 
-      sendEmail(candidate.contactInfo.email, emailSubject, emailText);
+      await sendEmail(candidate.contactInfo.email, emailSubject, emailText);
 
       if (status === 'rejected') {
           await candidate.deleteOne();
@@ -404,7 +404,7 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
         Your hall ticket request has been approved! Your hall ticket will be generated soon.
         Please wait for further communication.
       `;
-      sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Approved', message);
+      await sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Approved', message);
 
       return res.status(200).json({ message: 'Request approved and email sent to candidate' });
     } else if (status === 'rejected') {
@@ -424,7 +424,7 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
         We regret to inform you that your hall ticket request has been rejected. 
         Please contact support for more information.
       `;
-      sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Rejected', message);
+      await sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Rejected', message);
 
       return res.status(200).json({ message: 'Request rejected and email sent to candidate' });
     }
@@ -468,7 +468,7 @@ app.post('/generate-hallticket', async (req, res) => {
       Hall Ticket Number: ${hallTicketNumber}.
       Go to the portal to download the hall ticket.
     `;
-    sendEmail(candidate.contactInfo.email, 'Hall Ticket Generated', message);
+    await sendEmail(candidate.contactInfo.email, 'Hall Ticket Generated', message);
 
     res.status(201).json(hallTicket);
   } catch (err) {
