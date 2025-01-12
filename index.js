@@ -437,42 +437,42 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
 
 app.post('/generate-hallticket', async (req, res) => {
   const { candidateId, examCenter } = req.body;
-if (!mongoose.Types.ObjectId.isValid(candidateId)) {
+  if (!mongoose.Types.ObjectId.isValid(candidateId)) {
     return res.status(400).json({ error: 'Invalid candidate ID' });
   }
   try {
-      const candidate = await Candidate.findById(candidateId);
-      if (!candidate || candidate.hallTicketGenerated) {
-          return res.status(400).json({ error: 'Invalid candidate or hall ticket already generated' });
-      }
+    const candidate = await Candidate.findById(candidateId);
+    if (!candidate || candidate.hallTicketGenerated) {
+      return res.status(400).json({ error: 'Invalid candidate or hall ticket already generated' });
+    }
 
-    const hallTicketNumber = `HT-${candidateId}-${Date.now()}`;
-      const qrData =JSON.stringify({ candidateId, hallTicketNumber, examCenter });
-      const qrCode = await QRCode.toDataURL(qrData);
+    const hallTicketNumber = `HT-${Date.now()}`;
+    const qrCode = await QRCode.toDataURL(hallTicketNumber);
+    console.log(QRCode.toDataURL(hallTicketNumber));
 
-      const hallTicket = new HallTicket({
-          candidateId,
-          hallTicketNumber,
-          examCenter,
-          qrCode,
-      });
+    const hallTicket = new HallTicket({
+      candidateId,
+      hallTicketNumber,
+      examCenter,
+      qrCode,
+    });
 
-      await hallTicket.save();
-      candidate.hallTicketGenerated = true;
-      await candidate.save();
+    await hallTicket.save();
+    candidate.hallTicketGenerated = true;
+    await candidate.save();
 
-      // Send email with hall ticket details
-      const message = `
-          Dear ${candidate.name},
-          Your hall ticket has been generated successfully.
-          Hall Ticket Number: ${hallTicketNumber}.
-          Go to the portal to download the hall ticket.
-      `;
-      sendEmail(candidate.contactInfo.email, 'Hall Ticket Generated', message);
+    // Send email with hall ticket details
+    const message = `
+      Dear ${candidate.name},
+      Your hall ticket has been generated successfully.
+      Hall Ticket Number: ${hallTicketNumber}.
+      Go to the portal to download the hall ticket.
+    `;
+    sendEmail(candidate.contactInfo.email, 'Hall Ticket Generated', message);
 
-      res.status(201).json(hallTicket);
+    res.status(201).json(hallTicket);
   } catch (err) {
-      res.status(400).json({ error: err.message });
+    res.status(400).json({ error: err.message });
   }
 });
 //get hall ticket by hallticketNumber
@@ -489,20 +489,16 @@ app.get('/hallticket/:hallTicketNumber', async (req, res) => {
 
 
 app.post('/verify-qrcode', async (req, res) => {
-    const { qrData } = req.body;
-    try {
-      const decodedData = JSON.parse(qrData);
-      const hallTicket = await HallTicket.findOne({
-         candidateId: decodedData.candidateId,
-        hallTicketNumber: decodedData.hallTicketNumber
-      });
+  const { qrData } = req.body;
+  try {
+    const hallTicket = await HallTicket.findOne({ hallTicketNumber: qrData });
   
-      if (!hallTicket) return res.status(404).json({ error: 'Invalid QR Code' });
+    if (!hallTicket) return res.status(404).json({ error: 'Invalid QR Code' });
   
-      res.json({ message: 'QR Code is valid', hallTicket });
-    } catch (err) {
-      res.status(400).json({ error: 'Invalid QR Code format' });
-    }
+    res.json({ message: 'QR Code is valid', hallTicket });
+  } catch (err) {
+    res.status(400).json({ error: 'Invalid QR Code format' });
+  }
 });
 
 if (!process.env.MONGODB_URI) {
