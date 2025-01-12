@@ -492,7 +492,8 @@ app.post('/verify-qrcode', async (req, res) => {
   const { qrData } = req.body;
   try {
     const hallTicket = await HallTicket.findOne({ hallTicketNumber: qrData }).populate('candidateId');
-  
+    console.log(qrData);
+    console.log(qrData.toString());
     if (!hallTicket) return res.status(404).json({ error: 'Invalid QR Code' });
   
     res.json({ message: 'QR Code is valid', data:hallTicket.candidateId });
