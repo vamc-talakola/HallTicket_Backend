@@ -45,28 +45,30 @@ const nodemailer = require('nodemailer');
 const sendEmail = (to, subject, text) => {
   console.log('Sending email:', { to, subject, text });
   console.log('Email user:', process.env.EMAIL_USER);
-    const transporter = nodemailer.createTransport({
-        service: 'Gmail',
-        auth: {
-            user: process.env.EMAIL_USER, // Your email address
-            pass: process.env.EMAIL_PASS  // Your email password
-        }
-    });
+  console.log('Email pass:', process.env.EMAIL_PASS ? '****' : 'Not set'); // Check if EMAIL_PASS is set
 
-    const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to,
-        subject,
-        text
-    };
+  const transporter = nodemailer.createTransport({
+    service: 'Gmail',
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS
+    }
+  });
 
-    transporter.sendMail(mailOptions, (err, info) => {
-        if (err) {
-            console.error('Error sending email:', err);
-        } else {
-            console.log('Email sent:', info.response);
-        }
-    });
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to,
+    subject,
+    text
+  };
+
+  transporter.sendMail(mailOptions, (err, info) => {
+    if (err) {
+      console.error('Error sending email:', err);
+    } else {
+      console.log('Email sent:', info.response);
+    }
+  });
 };
 
 
@@ -76,22 +78,22 @@ app.get("/", (req, res) => {
 });
 
 app.post('/send-otp', async (req, res) => {
-    const { email } = req.body;
-    console.log(email);
+  const { email } = req.body;
+  console.log(email);
 
-    try {
-        const otp = Math.floor(100000 + Math.random() * 900000); // Generate 6-digit OTP
-        otps[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 }; // Expires in 5 minutes
-        console.log(otp);
+  try {
+    const otp = Math.floor(100000 + Math.random() * 900000); // Generate 6-digit OTP
+    otps[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 }; // Expires in 5 minutes
+    console.log(otp);
 
-        // Send email with the OTP
-        sendEmail(email, 'Your OTP for Verification', `Your OTP is: ${otp}`);
+    // Send email with the OTP
+    sendEmail(email, 'Your OTP for Verification', `Your OTP is: ${otp}`);
 
-        res.status(200).json({ message: 'OTP sent to email' });
-    } catch (err) {
-      console.log(err.message);
-        res.status(500).json({ error: err.message });
-    }
+    res.status(200).json({ message: 'OTP sent to email' });
+  } catch (err) {
+    console.log(err.message);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post('/verify-otp', (req, res) => {
