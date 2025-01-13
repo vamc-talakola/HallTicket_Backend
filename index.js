@@ -87,7 +87,7 @@ app.post('/send-otp', async (req, res) => {
     console.log(otp);
 
     // Send email with the OTP
-    await await sendEmail(email, 'Your OTP for Verification', `Your OTP is: ${otp}`);
+    await sendEmail(email, 'Your OTP for Verification', `Your OTP is: ${otp}`);
 
     res.status(200).json({ message: 'OTP sent to email' });
   } catch (err) {
