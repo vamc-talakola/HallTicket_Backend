@@ -17,6 +17,7 @@ const jwt = require('jsonwebtoken');
 const HallTicketRequest = require('./models/hallticketRequestSchema');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+const {sendEmail} = require('./mail');
 // const allowedOrigins = ['https://hall-ticket-frontend.vercel.app', 'http://localhost:3000']; // Replace with your actual frontend URLs
 
 // const corsOptions = {
@@ -40,36 +41,38 @@ app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Methods", "PUT, GET, POST, DELETE, OPTIONS");
   next();
 });
+
 const nodemailer = require('nodemailer');
 
-const sendEmail = (to, subject, text) => {
-  console.log('Sending email:', { to, subject, text });
-  console.log('Email user:', process.env.EMAIL_USER);
-  console.log('Email pass:', process.env.EMAIL_PASS ? process.env.EMAIL_PASS : 'Not set'); // Check if EMAIL_PASS is set
+// const sendEmail = async (to, subject, text) => {
+//   console.log('Sending email:', { to, subject, text });
+//   console.log('Email user:', process.env.EMAIL_USER);
+//   console.log('Email pass:', process.env.EMAIL_PASS ? process.env.EMAIL_PASS : 'Not set'); // Check if EMAIL_PASS is set
 
-  const transporter = nodemailer.createTransport({
-    service: 'Gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
+//   const transporter = nodemailer.createTransport({
+//     service: 'Gmail',
+//     auth: {
+//       user: process.env.EMAIL_USER,
+//       pass: process.env.EMAIL_PASS
+//     }
+//   });
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to,
-    subject,
-    text
-  };
+//   const mailOptions = {
+//     from: process.env.EMAIL_USER,
+//     to,
+//     subject,
+//     text
+//   };
 
-  transporter.sendMail(mailOptions, (err, info) => {
-    if (err) {
-      console.error('Error sending email:', err);
-    } else {
-      console.log('Email sent:', info.response);
-    }
-  });
-};
+//   await transporter.sendMail(mailOptions, (err, info) => {
+//     console.log(mailOptions);
+//     if (err) {
+//       console.error('Error sending email:', err);
+//     } else {
+//       console.log('Email sent:', info.response);
+//     }
+//   });
+// };
 
 
 const otps = {};
@@ -86,8 +89,14 @@ app.post('/send-otp', async (req, res) => {
     otps[email] = { otp, expiresAt: Date.now() + 5 * 60 * 1000 }; // Expires in 5 minutes
     console.log(otp);
 
+    const mailOptions = {
+      to: email,
+      subject: 'Your OTP for Verification',
+      text: `Your OTP is: ${otp}`
+    };
+
     // Send email with the OTP
-    await sendEmail(email, 'Your OTP for Verification', `Your OTP is: ${otp}`);
+    await sendEmail(null, null, mailOptions);
 
     res.status(200).json({ message: 'OTP sent to email' });
   } catch (err) {
@@ -286,7 +295,12 @@ app.put('/candidate/:id/status', async (req, res) => {
           ? `Dear ${candidate.name},\n\nYour application has been approved. You can proceed with the next steps.\n\nBest regards,\nThe Team`
           : `Dear ${candidate.name},\n\nYour application has been rejected. If you have questions, please contact us.\n\nBest regards,\nThe Team`;
 
-      await sendEmail(candidate.contactInfo.email, emailSubject, emailText);
+      const mailOptions = {
+          to: candidate.contactInfo.email,
+          subject: emailSubject,
+          text: emailText
+      };
+      await sendEmail(null, null, mailOptions);
 
       if (status === 'rejected') {
           await candidate.deleteOne();
@@ -404,7 +418,12 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
         Your hall ticket request has been approved! Your hall ticket will be generated soon.
         Please wait for further communication.
       `;
-      await sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Approved', message);
+      const mailOptions = {
+        to: candidate.contactInfo.email,
+        subject: 'Hall Ticket Request Approved',
+        text: message
+    };
+      await sendEmail(null,null , mailOptions);
 
       return res.status(200).json({ message: 'Request approved and email sent to candidate' });
     } else if (status === 'rejected') {
@@ -424,7 +443,14 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
         We regret to inform you that your hall ticket request has been rejected. 
         Please contact support for more information.
       `;
-      await sendEmail(candidate.contactInfo.email, 'Hall Ticket Request Rejected', message);
+
+      const mailOptions = {
+        to: candidate.contactInfo.email,
+        subject: 'Hall Ticket Request Rejected',
+        text: message
+    };
+
+    await sendEmail(null,null , mailOptions);
 
       return res.status(200).json({ message: 'Request rejected and email sent to candidate' });
     }
@@ -468,7 +494,14 @@ app.post('/generate-hallticket', async (req, res) => {
       Hall Ticket Number: ${hallTicketNumber}.
       Go to the portal to download the hall ticket.
     `;
-    await sendEmail(candidate.contactInfo.email, 'Hall Ticket Generated', message);
+
+    const mailOptions = {
+      to: candidate.contactInfo.email,
+      subject: 'Hall Ticket Generated',
+      text: message
+    };
+
+      await sendEmail(null,null , mailOptions);
 
     res.status(201).json(hallTicket);
   } catch (err) {
