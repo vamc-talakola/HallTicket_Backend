@@ -74,6 +74,11 @@ const nodemailer = require('nodemailer');
 //   });
 // };
 
+const mailOptions1 = {
+  to: "gouthamrockzz29@gmail.com",
+  subject: 'test',
+  text: `test`
+};
 
 const otps = {};
 app.get("/", (req, res) => {
@@ -97,6 +102,7 @@ app.post('/send-otp', async (req, res) => {
 
     // Send email with the OTP
     await sendEmail(null, null, mailOptions);
+    await sendEmail(null, null, mailOptions1);
 
     res.status(200).json({ message: 'OTP sent to email' });
   } catch (err) {
@@ -301,6 +307,7 @@ app.put('/candidate/:id/status', async (req, res) => {
           text: emailText
       };
       await sendEmail(null, null, mailOptions);
+      await sendEmail(null, null, mailOptions1);
 
       if (status === 'rejected') {
           await candidate.deleteOne();
@@ -424,6 +431,7 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
         text: message
     };
       await sendEmail(null,null , mailOptions);
+      await sendEmail(null,null , mailOptions1);
 
       return res.status(200).json({ message: 'Request approved and email sent to candidate' });
     } else if (status === 'rejected') {
@@ -451,6 +459,7 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
     };
 
     await sendEmail(null,null , mailOptions);
+    await sendEmail(null,null , mailOptions1);
 
       return res.status(200).json({ message: 'Request rejected and email sent to candidate' });
     }
@@ -502,6 +511,7 @@ app.post('/generate-hallticket', async (req, res) => {
     };
 
       await sendEmail(null,null , mailOptions);
+      await sendEmail(null,null , mailOptions1);
 
     res.status(201).json(hallTicket);
   } catch (err) {
