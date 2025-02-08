@@ -553,8 +553,8 @@ if (!process.env.MONGODB_URI) {
             dbName: process.env.DB_NAME
         })
         .then(() => {
-            app.listen(process.env.PORT || 4000, () => {
-                console.log("Node.js server is running on port 3000");
+            app.listen(process.env.PORT || 3000, () => {
+                console.log(`Node.js server is running on port ${process.env.PORT}`);
             });
             console.log("MongoDB connected");
         })
