@@ -77,7 +77,7 @@ const CandidateSchema = new mongoose.Schema({
   signature: { type: String, required: true },
   idProof: {
     type: String,
-    enum: ["Aadhar", "Voter", "Passport", "Driving License"],
+    enum: ["Aadhar", "Voter", "Passport", "Driving License","Pan"],
     required: true,
   },
   idProofNumber: { type: String, required: true },
