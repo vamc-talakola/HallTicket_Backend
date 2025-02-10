@@ -188,25 +188,29 @@ app.get("/proxy", async (req, res) => {
 
 
 app.post('/register', async (req, res) => {
-    const { name, fatherName,motherName, dob, gender, category,maritalStatus, contactInfo,educationInfo, photo, signature, password,examPreferences } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
+  const { name, fatherName, motherName, dob, gender, category, maritalStatus, contactInfo, educationInfo, photo, signature, password, examPreferences } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
 
-    try {
-        const existingCandidate = await Candidate.findOne({ contactInfo });
-        if (existingCandidate) {
-            return res.status(400).json({ error: 'Candidate already exists' });
-        }
-
-        const candidate = new Candidate({
-            ...req.body,
-            password: hashedPassword
-        });
-
-        const savedCandidate = await candidate.save();
-        res.status(201).json(savedCandidate);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
+  try {
+    const existingCandidate = await Candidate.findOne({
+      $or: [
+        { 'contactInfo.email': contactInfo.email }
+      ]
+    });
+    if (existingCandidate) {
+      return res.status(400).json({ error: 'Email already exists' });
     }
+
+    const candidate = new Candidate({
+      ...req.body,
+      password: hashedPassword
+    });
+
+    const savedCandidate = await candidate.save();
+    res.status(201).json(savedCandidate);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 app.post('/login', async (req, res) => {
