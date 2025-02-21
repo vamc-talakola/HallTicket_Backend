@@ -7,8 +7,7 @@ const HallTicketSchema = new mongoose.Schema({
     issuedDate: { type: Date, default: Date.now },
     qrCode: { type: String, required: true },
     examDate: { type: Date, required: true },
-    examTime: { type: String, required: true },
-    examDuration: { type: String, required: true },
+    examTime: { type: String, required: true }
     
 });
 

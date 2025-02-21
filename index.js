@@ -486,7 +486,7 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
 
 
 app.post('/generate-hallticket', async (req, res) => {
-  const { candidateId, examCenter,examDate,examTime,examDuration } = req.body;
+  const { candidateId, examCenter,examDate,examTime } = req.body;
   if (!mongoose.Types.ObjectId.isValid(candidateId)) {
     return res.status(400).json({ error: 'Invalid candidate ID' });
   }
@@ -506,7 +506,6 @@ app.post('/generate-hallticket', async (req, res) => {
       examCenter,
       examDate,
       examTime,
-      examDuration,
       qrCode,
     });
 
@@ -528,7 +527,7 @@ app.post('/generate-hallticket', async (req, res) => {
       text: message
     };
 
-      await sendEmail(null,null , mailOptions);
+     sendEmail(null,null , mailOptions);
       // await sendEmail(null,null , mailOptions1);
 
     res.status(201).json(hallTicket);

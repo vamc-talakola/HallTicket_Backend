@@ -13,7 +13,7 @@ const CandidateSchema = new mongoose.Schema({
   },
   temporaryAddress: { type: String, required: true },
   permanentAddress: { type: String, required: true },
-  sub_caste: { type: String, required: true },
+  sub_caste: { type: String},
   maritalStatus: {
     type: String,
     required: true,
@@ -53,6 +53,7 @@ const CandidateSchema = new mongoose.Schema({
       yearOfPassing: Number,
     },
   },
+  addressState: { type: String, required: true },
   examPreferences: {
     state: String,
     cities: [String],
@@ -77,7 +78,7 @@ const CandidateSchema = new mongoose.Schema({
   signature: { type: String, required: true },
   idProof: {
     type: String,
-    enum: ["Aadhar", "Voter", "Passport", "Driving License","Pan"],
+    enum: ["Aadhar","Pan"],
     required: true,
   },
   idProofNumber: { type: String, required: true },
