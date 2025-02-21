@@ -74,11 +74,11 @@ const nodemailer = require('nodemailer');
 //   });
 // };
 
-const mailOptions1 = {
-  to: "gouthamrockzz29@gmail.com",
-  subject: 'test',
-  text: `test`
-};
+// const mailOptions1 = {
+//   to: "gouthamrockzz29@gmail.com",
+//   subject: 'test',
+//   text: `test`
+// };
 
 const otps = {};
 app.get("/", (req, res) => {
@@ -102,7 +102,7 @@ app.post('/send-otp', async (req, res) => {
 
     // Send email with the OTP
     await sendEmail(null, null, mailOptions);
-    await sendEmail(null, null, mailOptions1);
+    // await sendEmail(null, null, mailOptions1);
 
     res.status(200).json({ message: 'OTP sent to email' });
   } catch (err) {
@@ -185,7 +185,18 @@ app.get("/proxy", async (req, res) => {
   }
 });
 
-
+//get hall-ticket number by candidateId
+app.get('/hallticket-number/:candidateId', async (req, res) => {
+    const { candidateId } = req.params;
+    try {
+        const hallTicket = await HallTicket.findOne
+        ({ candidateId }).populate('candidateId');
+        if (!hallTicket) return res.status(404).json({ error: 'Hall ticket not found' });
+        res.json({hallTicket});
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+})
 
 app.post('/register', async (req, res) => {
   const { name, fatherName, motherName, dob, gender, category, maritalStatus, contactInfo, educationInfo, photo, signature, password, examPreferences } = req.body;
@@ -311,7 +322,7 @@ app.put('/candidate/:id/status', async (req, res) => {
           text: emailText
       };
       await sendEmail(null, null, mailOptions);
-      await sendEmail(null, null, mailOptions1);
+      // await sendEmail(null, null, mailOptions1);
 
       if (status === 'rejected') {
           await candidate.deleteOne();
@@ -435,7 +446,7 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
         text: message
     };
       await sendEmail(null,null , mailOptions);
-      await sendEmail(null,null , mailOptions1);
+      // await sendEmail(null,null , mailOptions1);
 
       return res.status(200).json({ message: 'Request approved and email sent to candidate' });
     } else if (status === 'rejected') {
@@ -463,7 +474,7 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
     };
 
     await sendEmail(null,null , mailOptions);
-    await sendEmail(null,null , mailOptions1);
+    // await sendEmail(null,null , mailOptions1);
 
       return res.status(200).json({ message: 'Request rejected and email sent to candidate' });
     }
@@ -475,7 +486,7 @@ app.put('/approve-hallticket/:requestId', async (req, res) => {
 
 
 app.post('/generate-hallticket', async (req, res) => {
-  const { candidateId, examCenter } = req.body;
+  const { candidateId, examCenter,examDate,examTime,examDuration } = req.body;
   if (!mongoose.Types.ObjectId.isValid(candidateId)) {
     return res.status(400).json({ error: 'Invalid candidate ID' });
   }
@@ -493,6 +504,9 @@ app.post('/generate-hallticket', async (req, res) => {
       candidateId,
       hallTicketNumber,
       examCenter,
+      examDate,
+      examTime,
+      examDuration,
       qrCode,
     });
 
@@ -515,7 +529,7 @@ app.post('/generate-hallticket', async (req, res) => {
     };
 
       await sendEmail(null,null , mailOptions);
-      await sendEmail(null,null , mailOptions1);
+      // await sendEmail(null,null , mailOptions1);
 
     res.status(201).json(hallTicket);
   } catch (err) {

@@ -6,6 +6,10 @@ const HallTicketSchema = new mongoose.Schema({
     examCenter: { type: String, required: true },
     issuedDate: { type: Date, default: Date.now },
     qrCode: { type: String, required: true },
+    examDate: { type: Date, required: true },
+    examTime: { type: String, required: true },
+    examDuration: { type: String, required: true },
+    
 });
 
 const HallTicket = mongoose.model('HallTicket', HallTicketSchema);
